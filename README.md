@@ -69,6 +69,9 @@ Student-Performance-Prediction
 ├── README.md
 └── student_performance_model.pkl
 ```
+## 📚 Future Improvements
+- Improve model performance.
+- Add more visualizations.
 
 ## 👨‍💻 Author
 
