@@ -1,9 +1,11 @@
+#use: uvicorn app:app --reload
+#folder: cd *اسم الفولدر*
 
 import joblib
 import numpy as np
 import pandas as pd
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from sklearn.model_selection import train_test_split
@@ -13,6 +15,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
+from pydantic import BaseModel, ConfigDict
 
 from ucimlrepo import fetch_ucirepo
 
@@ -87,6 +90,8 @@ joblib.dump(model, "student_performance_model.pkl")
 
 # Input schema
 class StudentPerformanceInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     school: str
     sex: str
     age: int
@@ -117,8 +122,7 @@ class StudentPerformanceInput(BaseModel):
     Walc: int
     health: int
     absences: int
-
-
+    
 # Prepare input
 def prepare_input(request_data):
     input_dict = request_data.model_dump()
@@ -133,22 +137,54 @@ def prepare_input(request_data):
 # Endpoints
 @app.get("/")
 def root():
-    return {"message": "Student Performance API is running"}
+    return {
+        "message": "Student Performance API is running"
+    }
 
 
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
+@app.get("/model_info")
+def model_info():
+    return {
+        "model": "RandomForestRegressor",
+        "target": "G3",
+        "model_version": "1.0.0",
+        "features": X.columns.tolist()
+    }
+
+
+@app.get("/performance_level")
+def performance_level(grade: float):
+
+    if grade >= 16:
+        level = "Excellent"
+    elif grade >= 12:
+        level = "Good"
+    elif grade >= 10:
+        level = "Average"
+    else:
+        level = "Weak"
+
+    return {
+        "grade": grade,
+        "performance_level": level
+    }
 
 
 @app.post("/predict")
 def predict(input_data: StudentPerformanceInput):
+    try:
+        input_df = prepare_input(input_data)
 
-    input_df = prepare_input(input_data)
+        prediction = float(model.predict(input_df)[0])
 
-    prediction = float(model.predict(input_df)[0])
+        return {
+            "predicted_grade": round(prediction, 2),
+            "target": "G3",
+            "model_version": "1.0.0"
+        }
 
-    return {
-        "predicted_grade": round(prediction, 2),
-        "target": "G3"
-    }
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
