@@ -7,7 +7,7 @@
     "target_names": [
         "G3"
     ],
-    "training_date_utc": "2026-10-06T19:43:27.622968",
+    "training_date_utc": "2026-10-08T17:29:23.290990",
     "metrics": {
         "accuracy": 0.9,
         "precision": 0.944954128440367,
